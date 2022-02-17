@@ -28,5 +28,5 @@ jobs:
 
     - name: Build x3div
       run: |
-        export PATH=./installed/bin/:$PATH
+        export PATH=$(pwd)/installed/bin/:$PATH
         make CMP=gcc
