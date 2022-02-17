@@ -28,5 +28,5 @@ jobs:
 
     - name: Build x3div
       run: |
-        export PATH=$(pwd)/installed/bin/:$PATH
+        export PATH=$(pwd)/openmpi-4.1.2/installed/bin/:$PATH
         make CMP=gcc
