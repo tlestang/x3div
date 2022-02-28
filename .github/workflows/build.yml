@@ -21,6 +21,14 @@ jobs:
         path: openmpi-4.1.2/installed
         key: openmpi-4.1.2
 
+    # Same goes for pFUnit
+    - name: Cache pFUnit
+      id: cache-pfunit
+      uses: actions/cache@v2
+      with:
+        path: pfunit-4.2.2/installed
+        key: pfunit-4.2.2
+
     - name: Build openmpi
       if: steps.cache-openmpi.outputs.cache-hit != 'true'
       run: |
@@ -29,6 +37,13 @@ jobs:
         cd openmpi-4.1.2/ && mkdir installed
         ./configure --prefix=$(pwd)/installed
         make all install
+
+    - name: Build pFUnit
+      run: |
+        git clone --depth 1 --branch v4.2.2 https://github.com/Goddard-Fortran-Ecosystem/pFUnit.git pfunit-4.2.2
+        mkdir pfunit-4.2.2/build && cd pfunit-4.2.2/build
+        cmake ..
+        make install
 
     - name: Build x3div
       run: |
