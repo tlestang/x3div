@@ -48,6 +48,7 @@ jobs:
     - name: Build the tests
       run: |
         export PATH=$(pwd)/openmpi-4.1.2/installed/bin/:$PATH
+        mkdir build && cd build/
         cmake ..
         make tests
       env:
