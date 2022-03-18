@@ -52,7 +52,7 @@ jobs:
         cmake ..
         make tests
       env:
-        PFUNIT_DIR: pfunit-4.2.2/build/installed
+        PFUNIT_DIR: ${{ github.workspace }}/pfunit-4.2.2/build/installed
 
     - name: Run unit tests
       run: |
