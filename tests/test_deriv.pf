@@ -1,0 +1,26 @@
+@test
+subroutine test_derx_odd()
+  use funit
+
+  integer, parameter :: nx = 64
+  integer, parameter :: ny = 32
+  integer, parameter :: nz = 16
+  real, parameter :: dx = 1. / nx
+  real, dimension(nx, ny, nz) :: func, dfunc
+  integer, parameter :: ifirstder = 4
+
+  real, dimension(nx, ny, nz) :: di1, sx, ffx, fsx, fwx
+  call schemes()
+  do k=1,nz
+     do j=1,ny
+        do i=1,nx
+           x = i*dx*4.*pi
+           func(i,j,k)   = sin(x)  !odd
+        enddo
+     enddo
+  enddo
+
+  write(*,*) "Hello!"
+  @assertTrue(1 > 0)
+   
+end subroutine test_derx_odd
