@@ -514,6 +514,7 @@ contains
     ! verify the global size can actually be distributed as pencils
     if (nx<dims(1) .or. ny<dims(1) .or. ny<dims(2) .or. nz<dims(2)) then
        errorcode = 6
+       print *, "DIMS = ", dims(1), dims(2), nx, ny, nz
        call decomp_2d_abort(errorcode, &
             'Invalid 2D processor grid. ' // &
             'Make sure that min(nx,ny) >= p_row and ' // &
