@@ -1,5 +1,5 @@
 @test
-subroutine test_derx_odd()
+subroutine test_derx_odd_11()
   use funit
 
   use decomp_2d
@@ -20,14 +20,15 @@ subroutine test_derx_odd()
   nz = 16
   dx = 1. / nx
 
-  allocate(func(nx, ny, nz))
-  allocate(dfunc(nx, ny, nz))
-  allocate(expected_dfunc(nx, ny, nz))
-
-  ! real(mytype), dimension(nx, ny, nz) :: di1, sx, ffx, fsx, fwx
+  ! real(mytype), dimension(xsize(1), xsize(2), xsize(3)) :: di1, sx, ffx, fsx, fwx
 
   call parameter()
-  call decomp_2d_init(nx,ny,nz,1,1) ! serial test for now
+  call decomp_2d_init(nx,ny,nz,1,2) ! serial test for now
+  
+  allocate(func(nx, xsize(2), xsize(3)))
+  allocate(dfunc(nx, xsize(2), xsize(3)))
+  allocate(expected_dfunc(xsize(1), xsize(2), xsize(3)))
+
   ifirstder = 4
   nclx1=0
   nclxn=0
@@ -37,9 +38,9 @@ subroutine test_derx_odd()
   nclzn=0
   call init_variables()
   call schemes()
-  do k=1,nz
-     do j=1,ny
-        do i=1,nx
+  do k=1,xsize(3)
+     do j=1,xsize(2)
+        do i=1,xsize(1)
            x = (i-1.)*dx*4.*pi
            func(i,j,k)   = sin(x)  !odd
            expected_dfunc(i,j,k) = 4.*pi*cos(x)
@@ -48,9 +49,10 @@ subroutine test_derx_odd()
   enddo
 
 
-  call derx(dfunc, func, di1, sx, ffx, fsx, fwx, nx, ny, nz, 0)
+  call derx(dfunc, func, di1, sx, ffx, fsx, fwx, xsize(1), xsize(2), xsize(3), 0)
   @assertEqual(dfunc, expected_dfunc, tolerance=1E-2)
 
 call mpi_finalize(ierr)
 
-end subroutine test_derx_odd
+end subroutine test_derx_odd_11
+
