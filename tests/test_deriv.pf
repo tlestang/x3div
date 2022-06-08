@@ -8,7 +8,7 @@ subroutine test_derx_odd()
   use var
   use MPI
 
-  real, dimension(nx, ny, nz) :: func, dfunc
+  real, allocatable, dimension(:, :, :) :: func, dfunc
 
     !! Initialise MPI
   call MPI_INIT(ierr)
@@ -20,10 +20,12 @@ subroutine test_derx_odd()
   nz = 16
   dx = 1. / nx
 
+  allocate(func(nx, ny, nz))
 
   ! real(mytype), dimension(nx, ny, nz) :: di1, sx, ffx, fsx, fwx
 
-
+  call parameter()
+  call decomp_2d_init(nx,ny,nz,1,1) ! serial test for now
   ifirstder = 4
   nclx1=1
   nclxn=1
@@ -43,6 +45,7 @@ subroutine test_derx_odd()
   enddo
 
   write(*,*) "Hello!"
+  print *, func
   @assertTrue(1 > 0)
 
 end subroutine test_derx_odd

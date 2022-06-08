@@ -7,6 +7,7 @@ set(other_src
   ../src/variables.f90
   ../src/schemes.f90
   ../src/derive.f90
+  ../src/parameters.f90
   )
   
 add_pfunit_ctest(tests
