@@ -1,58 +1,65 @@
-@test
-subroutine test_derx_odd_11()
+module test_deriv
+  use mpi
   use funit
-
   use decomp_2d
   use param
   use variables
   use var
-  use MPI
+  implicit none
 
-  real, allocatable, dimension(:, :, :) :: func, dfunc, expected_dfunc
-
-    !! Initialise MPI
-  call MPI_INIT(ierr)
-  call MPI_COMM_RANK(MPI_COMM_WORLD,nrank,ierr)
-  call MPI_COMM_SIZE(MPI_COMM_WORLD,nproc,ierr)
-
-  nx = 64
-  ny = 32
-  nz = 16
-  dx = 1. / nx
-
-  ! real(mytype), dimension(xsize(1), xsize(2), xsize(3)) :: di1, sx, ffx, fsx, fwx
-
-  call parameter()
-  call decomp_2d_init(nx,ny,nz,1,2) ! serial test for now
+  integer :: i, j, k, ierr
+  real(mytype) :: x
+contains
   
-  allocate(func(nx, xsize(2), xsize(3)))
-  allocate(dfunc(nx, xsize(2), xsize(3)))
-  allocate(expected_dfunc(xsize(1), xsize(2), xsize(3)))
+  @test
+  subroutine test_derx_odd_11()
 
-  ifirstder = 4
-  nclx1=0
-  nclxn=0
-  ncly1=0
-  nclyn=0
-  nclz1=0
-  nclzn=0
-  call init_variables()
-  call schemes()
-  do k=1,xsize(3)
-     do j=1,xsize(2)
-        do i=1,xsize(1)
-           x = (i-1.)*dx*4.*pi
-           func(i,j,k)   = sin(x)  !odd
-           expected_dfunc(i,j,k) = 4.*pi*cos(x)
-        enddo
-     enddo
-  enddo
+    real, allocatable, dimension(:, :, :) :: func, dfunc, expected_dfunc
+
+    call MPI_INIT(ierr)
+    call MPI_COMM_RANK(MPI_COMM_WORLD,nrank,ierr)
+    call MPI_COMM_SIZE(MPI_COMM_WORLD,nproc,ierr)
+
+    nx = 64
+    ny = 32
+    nz = 16
+    dx = 1. / nx
+
+    ! real(mytype), dimension(xsize(1), xsize(2), xsize(3)) :: di1, sx, ffx, fsx, fwx
+
+    call parameter()
+    call decomp_2d_init(nx,ny,nz,1,2) ! serial test for now
+
+    allocate(func(nx, xsize(2), xsize(3)))
+    allocate(dfunc(nx, xsize(2), xsize(3)))
+    allocate(expected_dfunc(xsize(1), xsize(2), xsize(3)))
+
+    ifirstder = 4
+    nclx1=0
+    nclxn=0
+    ncly1=0
+    nclyn=0
+    nclz1=0
+    nclzn=0
+    call init_variables()
+    call schemes()
+    do k=1,xsize(3)
+       do j=1,xsize(2)
+          do i=1,xsize(1)
+             x = (i-1.)*dx*4.*pi
+             func(i,j,k)   = sin(x)  !odd
+             expected_dfunc(i,j,k) = 4.*pi*cos(x)
+          enddo
+       enddo
+    enddo
 
 
-  call derx(dfunc, func, di1, sx, ffx, fsx, fwx, xsize(1), xsize(2), xsize(3), 0)
-  @assertEqual(dfunc, expected_dfunc, tolerance=1E-2)
+    call derx(dfunc, func, di1, sx, ffx, fsx, fwx, xsize(1), xsize(2), xsize(3), 0)
+    @assertEqual(dfunc, expected_dfunc, tolerance=1E-2)
 
-call mpi_finalize(ierr)
+    call mpi_finalize(ierr)
 
-end subroutine test_derx_odd_11
+  end subroutine test_derx_odd_11
+
+end module test_deriv
 
