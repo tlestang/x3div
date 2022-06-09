@@ -1,6 +1,6 @@
 module test_deriv
   use mpi
-  use funit
+  use pFUnit
   use decomp_2d
   use param
   use variables
@@ -11,14 +11,11 @@ module test_deriv
   real(mytype) :: x
 contains
   
-  @test
-  subroutine test_derx_odd_11()
+  @test(npes=[2])
+  subroutine test_derx_odd_11(this)
+    class (MpiTestMethod), intent(inout) :: this
 
     real, allocatable, dimension(:, :, :) :: func, dfunc, expected_dfunc
-
-    call MPI_INIT(ierr)
-    call MPI_COMM_RANK(MPI_COMM_WORLD,nrank,ierr)
-    call MPI_COMM_SIZE(MPI_COMM_WORLD,nproc,ierr)
 
     nx = 64
     ny = 32
@@ -28,6 +25,7 @@ contains
     ! real(mytype), dimension(xsize(1), xsize(2), xsize(3)) :: di1, sx, ffx, fsx, fwx
 
     call parameter()
+    nproc = this%getNumProcesses()
     call decomp_2d_init(nx,ny,nz,1,2) ! serial test for now
 
     allocate(func(nx, xsize(2), xsize(3)))
@@ -56,8 +54,6 @@ contains
 
     call derx(dfunc, func, di1, sx, ffx, fsx, fwx, xsize(1), xsize(2), xsize(3), 0)
     @assertEqual(dfunc, expected_dfunc, tolerance=1E-2)
-
-    call mpi_finalize(ierr)
 
   end subroutine test_derx_odd_11
 
