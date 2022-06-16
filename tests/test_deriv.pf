@@ -1,59 +1,65 @@
 module test_deriv
-  use mpi
-  use pFUnit
-  use decomp_2d
-  use param
-  use variables
-  use var
+  use funit
   implicit none
 
-  integer :: i, j, k, ierr
-  real(mytype) :: x
-contains
-  
-  @test(npes=[2])
+  @testParameter
+   type, extends (AbstractTestParameter) :: pencilSize
+      integer :: nx, ny, nz
+   contains
+     procedure :: toString
+   end type pencilSize
+
+   @testCase(testParameters={getParameters()}, constructor=newTestDeriv)
+   type, extends (ParameterizedTestCase) :: testDeriv
+      type(pencilSize) :: pencil_size
+    contains
+      procedure :: allocate_on_pencil
+   end type testDeriv
+
+ contains
+
+   function toString(this) result(string)
+     class(pencilSize), intent(in) :: this
+     character(:), allocatable :: string
+     character(len=80) :: buffer
+     write(buffer, '("nx = ",i3.3,1x,"ny = ( ",i3.3,1x,"nz = ( ",i3.3)')
+     string = trim(buffer)
+   end function toString
+
+   subroutine allocate_on_pencil(this, array)
+     class(testDeriv), intent(in) :: this
+     real, allocatable, intent(inout) :: array(:, :, :)
+     allocate(array( &
+          & this % pencil_size % nx, &
+          & this % pencil_size % ny, &
+          & this % pencil_size % nz) &
+          & )
+   end subroutine allocate_on_pencil
+
+   function newTestDeriv(param)
+     type(testDeriv) :: newTestDeriv
+     type(pencilSize), intent(in) :: param
+     newTestDeriv%pencil_size = param
+   end function newTestDeriv
+
+   function getParameters() result(test_pencil_sizes)
+     type(pencilSize), allocatable :: test_pencil_sizes(:)
+     test_pencil_sizes = [ &
+          & pencilSize(32,16,16), &
+          & pencilSize(16, 8, 4)  &
+          & ]
+   end function getParameters
+
+  @test
   subroutine test_derx_odd_11(this)
-    class (MpiTestMethod), intent(inout) :: this
-
+    class (testDeriv), intent(inout) :: this
     real, allocatable, dimension(:, :, :) :: func, dfunc, expected_dfunc
+    call this % allocate_on_pencil(func)
+    call this % allocate_on_pencil(dfunc)
+    call this % allocate_on_pencil(expected_dfunc)
 
-    nx = 64
-    ny = 32
-    nz = 16
-    dx = 1. / nx
-
-    ! real(mytype), dimension(xsize(1), xsize(2), xsize(3)) :: di1, sx, ffx, fsx, fwx
-
-    call parameter()
-    nproc = this%getNumProcesses()
-    call decomp_2d_init(nx,ny,nz,1,2) ! serial test for now
-
-    allocate(func(nx, xsize(2), xsize(3)))
-    allocate(dfunc(nx, xsize(2), xsize(3)))
-    allocate(expected_dfunc(xsize(1), xsize(2), xsize(3)))
-
-    ifirstder = 4
-    nclx1=0
-    nclxn=0
-    ncly1=0
-    nclyn=0
-    nclz1=0
-    nclzn=0
-    call init_variables()
-    call schemes()
-    do k=1,xsize(3)
-       do j=1,xsize(2)
-          do i=1,xsize(1)
-             x = (i-1.)*dx*4.*pi
-             func(i,j,k)   = sin(x)  !odd
-             expected_dfunc(i,j,k) = 4.*pi*cos(x)
-          enddo
-       enddo
-    enddo
-
-
-    call derx(dfunc, func, di1, sx, ffx, fsx, fwx, xsize(1), xsize(2), xsize(3), 0)
-    @assertEqual(dfunc, expected_dfunc, tolerance=1E-2)
+    deallocate(func, dfunc, expected_dfunc)
+    @assertTrue(.true.)
 
   end subroutine test_derx_odd_11
 
