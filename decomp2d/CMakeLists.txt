@@ -12,3 +12,4 @@ if(${CMAKE_Fortran_COMPILER_VERSION} VERSION_GREATER_EQUAL 10.3)
   # See https://github.com/xcompact3d/x3div/pull/20#discussion_r814948614
 endif()
 target_compile_options(decomp2d PRIVATE ${gfortran_flags})
+target_compile_definitions(decomp2d PUBLIC DOUBLE_PREC)
