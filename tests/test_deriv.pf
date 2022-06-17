@@ -1,6 +1,16 @@
 module test_deriv
   use funit
+  use decomp_2d, only: mytype
   implicit none
+
+  interface
+     subroutine derx_11(tx,ux,rx,sx,ffx,fsx,fwx,nx,ny,nz,npaire)
+       integer :: nx,ny,nz,npaire
+       real(KIND(0.0d0)), dimension(nx,ny,nz) :: tx,ux,rx
+       real(KIND(0.0d0)), dimension(ny,nz):: sx
+       real(KIND(0.0d0)), dimension(nx):: ffx,fsx,fwx
+     end subroutine derx_11
+  end interface
 
   @testParameter
    type, extends (AbstractTestParameter) :: pencilSize
@@ -14,6 +24,7 @@ module test_deriv
       type(pencilSize) :: pencil_size
     contains
       procedure :: allocate_on_pencil
+      procedure :: setup_work_arrays
    end type testDeriv
 
  contains
@@ -28,13 +39,44 @@ module test_deriv
 
    subroutine allocate_on_pencil(this, array)
      class(testDeriv), intent(in) :: this
-     real, allocatable, intent(inout) :: array(:, :, :)
+     real(mytype), allocatable, intent(inout) :: array(:, :, :)
      allocate(array( &
           & this % pencil_size % nx, &
           & this % pencil_size % ny, &
           & this % pencil_size % nz) &
           & )
    end subroutine allocate_on_pencil
+
+   subroutine setup_work_arrays(this, ff, fs, fw)
+     use param, only: one, three, zero
+     class(testDeriv), intent(in) :: this
+     real(mytype), allocatable, intent(out) :: ff(:), fs(:), fw(:)
+     real(mytype), allocatable :: fb(:)
+     real(mytype), parameter :: alfai = 1.0d0 / 3.0d0
+     integer :: i
+
+     ff = [(alfai, i = 1, this % pencil_size % nx)]
+     ff(1) = alfai + alfai
+     ff(this % pencil_size % nx) = 0.0d0
+     fb = [(alfai, i = 1, this % pencil_size % nx)]
+     fb(this % pencil_size % nx - 1) = alfai + alfai
+     fb(this % pencil_size % nx) = 0.0d0
+     fw = [(1.0d0, i = 1, this % pencil_size % nx)]
+     fs = [(0.0d0, i = 1, this % pencil_size % nx)]
+
+     do i=2, this % pencil_size % nx
+        fs(i)=fb(i-1)/fw(i-1)
+        fw(i)=fw(i)-ff(i-1)*fs(i)
+     enddo
+     do i=1, this % pencil_size % nx
+        fw(i)= 1.0d0 / fw(i)
+     enddo
+     fs(1) = 0.0d0
+
+     deallocate(fb)
+   end subroutine setup_work_arrays
+     
+
 
    function newTestDeriv(param)
      type(testDeriv) :: newTestDeriv
@@ -45,21 +87,52 @@ module test_deriv
    function getParameters() result(test_pencil_sizes)
      type(pencilSize), allocatable :: test_pencil_sizes(:)
      test_pencil_sizes = [ &
-          & pencilSize(32,16,16), &
-          & pencilSize(16, 8, 4)  &
+          & pencilSize(64,64,64) &
           & ]
    end function getParameters
 
   @test
   subroutine test_derx_odd_11(this)
+    use param, only: ifirstder, nclx1, nclxn, pi, thirtysix, one
+    use derivX, only: afix, bfix
+    use decomp_2d, only: mytype
+
     class (testDeriv), intent(inout) :: this
-    real, allocatable, dimension(:, :, :) :: func, dfunc, expected_dfunc
+    real(mytype), allocatable, dimension(:, :, :) :: func, dfunc, expected_dfunc, di1
+    real(mytype), allocatable :: ff(:), fs(:), fw(:)
+    real(mytype), allocatable :: s(:, :)
+    integer :: i, j, k, nx
+    real(mytype) :: x, dx
+
+    nx = this % pencil_size % nx
+    dx = 1.0d0 / (nx - 1)
     call this % allocate_on_pencil(func)
     call this % allocate_on_pencil(dfunc)
     call this % allocate_on_pencil(expected_dfunc)
+    call this % allocate_on_pencil(di1)
+    allocate(s(this % pencil_size % ny, this % pencil_size % nz))
+    call this % setup_work_arrays(ff, fs, fw)
 
-    deallocate(func, dfunc, expected_dfunc)
-    @assertTrue(.true.)
+    afix = (7.0d0 / 9.0d0) / dx
+    bfix = (1.0d0 / 36.0d0) / dx
+    do k=1,this % pencil_size % nz
+       do j=1,this % pencil_size % ny
+          do i=1,this % pencil_size % nx
+             x = (i - 1.) * dx * 4.0d0 * pi
+             func(i,j,k) = sin(x)  !odd
+             expected_dfunc(i,j,k) = 4.0d0 * pi * cos(x)
+          enddo
+       enddo
+    enddo
+
+    call derx_11(dfunc, func, di1, s, ff, fs, fw, &
+         & this % pencil_size % nx, &
+         & this % pencil_size % ny, &
+         & this % pencil_size % nz, &
+         npaire = 0)
+
+    @assertEqual(dfunc, expected_dfunc, tolerance=1E-3)
+    deallocate(func, dfunc, expected_dfunc, di1, s)
 
   end subroutine test_derx_odd_11
 
