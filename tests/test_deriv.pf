@@ -22,6 +22,12 @@ module test_deriv
      end subroutine derx_00
   end interface
 
+  enum, bind(c)
+     enumerator :: periodic
+     enumerator :: neumann
+     enumerator :: dirichlet
+  end enum
+
   @testParameter
   type, extends(AbstractTestParameter) :: pencilSize
      integer :: nx, ny, nz
@@ -82,9 +88,9 @@ module test_deriv
      fb(this % pencil_size % nx) = 0.
 
      select case(ncl1)
-     case(1)
+     case(neumann)
         ff(1) = alfai + alfai
-     case(0)
+     case(periodic)
         fw(1) = 2.
      case default
         write(*, *) "Shouldn't be here, stopping"
@@ -92,9 +98,9 @@ module test_deriv
      end select
 
      select case(ncln)
-     case(1)
+     case(neumann)
         fb(this % pencil_size % nx - 1) = alfai + alfai
-     case(0)
+     case(periodic)
         fw(this % pencil_size % nx) = 1. + alfai * alfai
      case default
         write(*, *) "Shouldn't be here, stopping"
@@ -137,7 +143,7 @@ module test_deriv
     call this % allocate_on_pencil(dfunc)
     call this % allocate_on_pencil(expected_dfunc)
 
-    call this % setup_coefficient_arrays(ff, fs, fw, ncl1 = 1, ncln = 1)
+    call this % setup_coefficient_arrays(ff, fs, fw, ncl1 = neumann, ncln = neumann)
 
     dx = 1. / (this % pencil_size % nx - 1)
     do k=1,this % pencil_size % nz
@@ -185,7 +191,7 @@ module test_deriv
     call this % allocate_on_pencil(dfunc)
     call this % allocate_on_pencil(expected_dfunc)
 
-    call this % setup_coefficient_arrays(ff, fs, fw, ncl1 = 0, ncln = 0)
+    call this % setup_coefficient_arrays(ff, fs, fw, ncl1 = periodic, ncln = periodic)
 
     dx = 1. / this % pencil_size % nx
     do k=1,this % pencil_size % nz
