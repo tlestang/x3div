@@ -94,28 +94,27 @@ module test_deriv
           & )
    end subroutine allocate_on_pencil
 
-   subroutine setup_coefficient_arrays(this, ff, fs, fw, ncl1, ncln)
-     class(testDeriv), intent(in) :: this
+   subroutine setup_coefficient_arrays(this, ncl1, ncln)
+     class(testDeriv), intent(inout) :: this
      integer, intent(in) :: ncl1, ncln
-     real, allocatable, intent(out) :: ff(:), fs(:), fw(:)
 
      real, allocatable :: fb(:)
      real, parameter :: alfai = 1. / 3.
      integer :: i
 
-     ff = [(alfai, i = 1,this % pencil_size % nx)]
-     fw = [(1., i = 1,this % pencil_size % nx)]
-     fs = [(0., i = 1,this % pencil_size % nx)]
+     this % ff = [(alfai, i = 1,this % pencil_size % nx)]
+     this % fw = [(1., i = 1,this % pencil_size % nx)]
+     this % fs = [(0., i = 1,this % pencil_size % nx)]
      fb = [(alfai, i = 1, this % pencil_size % nx)]
 
-     ff(this % pencil_size % nx) = 0.
+     this % ff(this % pencil_size % nx) = 0.
      fb(this % pencil_size % nx) = 0.
 
      select case(ncl1)
      case(neumann)
-        ff(1) = alfai + alfai
+        this % ff(1) = alfai + alfai
      case(periodic)
-        fw(1) = 2.
+        this % fw(1) = 2.
      case default
         write(*, *) "Shouldn't be here, stopping"
         stop
@@ -125,19 +124,19 @@ module test_deriv
      case(neumann)
         fb(this % pencil_size % nx - 1) = alfai + alfai
      case(periodic)
-        fw(this % pencil_size % nx) = 1. + alfai * alfai
+        this % fw(this % pencil_size % nx) = 1. + alfai * alfai
      case default
         write(*, *) "Shouldn't be here, stopping"
         stop
      end select
 
      do i=2,this % pencil_size % nx
-        fs(i) = fb(i-1) / fw(i-1)
-        fw(i) = fw(i) - ff(i-1) * fs(i)
+        this % fs(i) = fb(i-1) / this % fw(i-1)
+        this % fw(i) = this % fw(i) - this % ff(i-1) * this % fs(i)
      enddo
-     fs(1) = 0.
+     this % fs(1) = 0.
      do i=1,this % pencil_size % nx
-        fw(i) = 1. / fw(i)
+        this % fw(i) = 1. / this % fw(i)
      enddo
 
      deallocate(fb)
@@ -160,7 +159,7 @@ module test_deriv
     integer :: i, j, k
     real :: x, dx
 
-    call this % setup_coefficient_arrays(this % ff, this % fs, this % fw, ncl1 = neumann, ncln = neumann)
+    call this % setup_coefficient_arrays(ncl1 = neumann, ncln = neumann)
 
     dx = 1. / (this % pencil_size % nx - 1)
     do k=1,this % pencil_size % nz
@@ -195,7 +194,7 @@ module test_deriv
     integer :: i, j, k
     real :: x, dx
 
-    call this % setup_coefficient_arrays(this % ff, this % fs, this % fw, ncl1 = periodic, ncln = periodic)
+    call this % setup_coefficient_arrays(ncl1 = periodic, ncln = periodic)
 
     dx = 1. / this % pencil_size % nx
     do k=1,this % pencil_size % nz
