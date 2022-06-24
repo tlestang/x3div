@@ -1,26 +1,11 @@
 module test_deriv
   use funit
+  use variables, only: derivative_x
   implicit none
 
   ! Explicit interface required as long as derivative functions
   ! are not defined in a module.
-  interface
-     subroutine derx_11(tx,ux,rx,sx,ffx,fsx,fwx,nx,ny,nz,npaire)
-       integer :: nx,ny,nz,npaire
-       real, dimension(nx,ny,nz) :: tx,ux,rx
-       real, dimension(ny,nz):: sx
-       real, dimension(nx):: ffx,fsx,fwx
-     end subroutine derx_11
-  end interface
-
-  interface
-     subroutine derx_00(tx,ux,rx,sx,ffx,fsx,fwx,nx,ny,nz,npaire)
-       integer :: nx,ny,nz,npaire
-       real, dimension(nx,ny,nz) :: tx,ux,rx
-       real, dimension(ny,nz):: sx
-       real, dimension(nx):: ffx,fsx,fwx
-     end subroutine derx_00
-  end interface
+  procedure(derivative_x) :: derx_00, derx_11
 
   enum, bind(c)
      enumerator :: periodic
