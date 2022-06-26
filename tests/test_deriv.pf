@@ -172,7 +172,7 @@ module test_deriv
   @test
   subroutine test_derx_odd_00(this)
     use param, only: pi
-    use derivX, only: afix, bfix
+    use derivX, only: afix, bfix, alfaix
 
     class (testDeriv), intent(inout) :: this
 
@@ -194,6 +194,7 @@ module test_deriv
 
     afix = (7. / 9.) / dx
     bfix = (1. / 36.) / dx
+    alfaix = 1. / 3.
     call derx_00(this % dfunc, this % func, this % di1, &
          & this % s, this % ff, this % fs, this % fw, &
          & this % pencil_size % nx, &
